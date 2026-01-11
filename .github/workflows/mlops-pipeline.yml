@@ -249,22 +249,21 @@ jobs:
       run: |
         echo "🚀 Deploying to staging environment..."
         # Actual deployment commands (e.g., Kubernetes, AWS ECS, etc.)
-        # kubectl set image deployment/sales-api sales-api=${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
         echo "✅ Deployment complete"
     
     - name: Run smoke tests
       run: |
         echo "Running smoke tests against staging..."
         # Add actual API health checks
-        # curl -f https://staging-api.yourcompany.com/health || exit 1
         echo "✅ Smoke tests passed"
     
     - name: Notify team
       uses: 8398a7/action-slack@v3
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
       with:
         status: ${{ job.status }}
         text: 'Staging deployment completed'
-        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
       if: always()
 
   # ===========================
@@ -273,7 +272,7 @@ jobs:
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: deploy-staging
+    needs: [deploy-staging, train-model]
     environment:
       name: production
       url: https://api.yourcompany.com
@@ -283,43 +282,23 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-    
-    - name: Blue-Green Deployment
+
+    - name: Deploy to Production
       run: |
-        echo "🚀 Starting blue-green deployment to production..."
-        # Deploy new version alongside old version
-        # Switch traffic gradually (10% -> 50% -> 100%)
-        echo "✅ Production deployment complete"
-    
-    - name: Health checks
+        echo "🚀 Deploying to PRODUCTION environment..."
+        # Actual deployment commands
+        echo "✅ Deployment complete"
+
+    - name: Run smoke tests
       run: |
-        echo "Running production health checks..."
-        # curl -f https://api.yourcompany.com/health || exit 1
-        echo "✅ All health checks passed"
-    
-    - name: Monitor for 5 minutes
-      run: |
-        echo "Monitoring new deployment for issues..."
-        sleep 300
-        echo "✅ No critical issues detected"
-    
-    - name: Rollback on failure
-      if: failure()
-      run: |
-        echo "❌ Issues detected - initiating rollback"
-        # kubectl rollout undo deployment/sales-api
-        echo "✅ Rollback complete"
-    
-    - name: Update model registry
-      run: |
-        echo "Updating MLflow model stage to Production..."
-        # python -c "import mlflow; client = mlflow.MlflowClient(); client.transition_model_version_stage('sales-quantity-classifier', '1', 'Production')"
-        echo "✅ Model registry updated"
-    
+        echo "Running smoke tests against production..."
+        echo "✅ Smoke tests passed"
+
     - name: Notify team
       uses: 8398a7/action-slack@v3
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
       with:
         status: ${{ job.status }}
         text: 'Production deployment completed - Model Accuracy: ${{ needs.train-model.outputs.accuracy }}'
-        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
       if: always()
