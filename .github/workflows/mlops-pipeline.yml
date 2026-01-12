@@ -169,7 +169,7 @@ jobs:
     - name: Check performance threshold
       run: |
         accuracy=${{ steps.metrics.outputs.accuracy }}
-        threshold=0.99
+        threshold=1.0
         if (( $(echo "$accuracy < $threshold" | bc -l) )); then
           echo "❌ Model accuracy $accuracy below threshold $threshold"
           exit 1
