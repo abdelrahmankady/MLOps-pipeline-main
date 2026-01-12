@@ -52,3 +52,10 @@ class TestStableHash(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    
+    
+    def test_intentional_failure(self):
+        """
+        This test exists to force the pipeline to fail.
+        """
+        self.assertTrue(False, "🚨 Intentional Failure Triggered 🚨")
