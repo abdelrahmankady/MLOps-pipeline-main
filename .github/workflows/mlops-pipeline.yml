@@ -169,7 +169,7 @@ jobs:
     - name: Check performance threshold
       run: |
         accuracy=${{ steps.metrics.outputs.accuracy }}
-        threshold=9.0
+        threshold=0.40  # Low threshold so training PASSES (allowing us to test deployment failure)
         if (( $(echo "$accuracy < $threshold" | bc -l) )); then
           echo "❌ Model accuracy $accuracy below threshold $threshold"
           exit 1
@@ -231,7 +231,7 @@ jobs:
           MODEL_ACCURACY=${{ needs.train-model.outputs.accuracy }}
 
   # ===========================
-  # JOB 5: Deploy to Staging
+  # JOB 5: Deploy to Staging (Fails on Purpose)
   # ===========================
   deploy-staging:
     name: Deploy to Staging
@@ -248,23 +248,24 @@ jobs:
     - name: Deploy to staging
       run: |
         echo "🚀 Deploying to staging environment..."
-        # Actual deployment commands (e.g., Kubernetes, AWS ECS, etc.)
-        echo "✅ Deployment complete"
-    
-    - name: Run smoke tests
-      run: |
-        echo "Running smoke tests against staging..."
-        # Add actual API health checks
-        echo "✅ Smoke tests passed"
-    
+        
+        # ---------------------------------------------------
+        # SIMULATING A FAILURE HERE
+        # ---------------------------------------------------
+        echo "❌ Critical Error: Kubernetes Cluster Unreachable (Connection Refused)"
+        echo "⚠️ Deployment Rolling Back..."
+        
+        # This command forces the GitHub Action to turn RED 🔴
+        exit 1
+
     - name: Notify team
       uses: 8398a7/action-slack@v3
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
       with:
         status: ${{ job.status }}
-        text: 'Staging deployment completed'
-      if: always()
+        text: 'Staging deployment failed'
+      if: failure()
 
   # ===========================
   # JOB 6: Deploy to Production
